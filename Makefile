@@ -1,6 +1,7 @@
 make:
-	gcc -o execTest/main execTest/main.c
-	gcc -o main2 main2.c
-
+	gcc -o enc/enc enc/enc_main.c
+	gcc -o main main2.c
+	gcc -o p/p p/p_main.c
+	gcc -o chan/chan chan/chan_main.c
 clean: 
-	rm -f execTest/main main2
+	rm -f enc/enc main2 p/p chan/chan
