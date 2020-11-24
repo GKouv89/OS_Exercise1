@@ -6,7 +6,9 @@
 #include <stdio.h>
 #include <sys/ipc.h>
 #include <fcntl.h>
-#include <sys/sem.h>
+#include <sys/stat.h>
+#include <semaphore.h>
+// #include <sys/sem.h>
 #include <sys/shm.h>
 #include <unistd.h>
 #include <string.h>
@@ -14,21 +16,27 @@
 #include <sys/types.h>
 #include <errno.h>
 
-#include "common_keys1.h"
-// #define MESSAGE_SIZE 50
+// #include "common_keys1.h"
+#include "../shared/shared_memory.h"
+#include "../shared/shared_semaphores.h"
+#include "../shared/message_format.h"
+
+
 
 int main(){
-    int shm_key = ftok(".", 'a');
-    int shm_id = shmget((key_t) shm_key, MESSAGE_SIZE*sizeof(char) + sizeof(int), 0666 | IPC_CREAT);
-    char *sh_mem1 = shmat(shm_id, NULL, 0);
+
+    // Shared memory operations
+    char *sh_mem = attach_to_block(FIRST_FILE, BLOCK_SIZE, 0);
+    if(sh_mem == NULL){
+        fprintf(stderr, "Failed to create or attach to shared memory block in P1.\n");
+    }
+        
+    // Semaphore ops. P1 will create the named semaphores, ENC1 will simply request them.
+    sem_unlink(P1_SEM);
+    sem_unlink(ENC1_CONS);
     
-    int mutex_key = ftok(".", 'b');
-    int empty_key = ftok(".", 'c');
-    int full_key = ftok(".", 'd');
-    
-    int mutex = semget((key_t) mutex_key, 1, 0600 | IPC_CREAT);
-    int empty = semget((key_t) empty_key, 1, 0600 | IPC_CREAT);
-    int full = semget((key_t) full_key, 1, 0600 | IPC_CREAT);
+    sem_t *p1 = sem_open(P1_SEM, O_CREAT, 0660, 0);
+    sem_t *enc1 = sem_open(ENC1_CONS, O_CREAT, 0660, 1);
     
     pid_t pid = fork();
     if(pid == 0){
@@ -36,22 +44,20 @@ int main(){
         if(execlp(enc1, enc1, NULL) == -1){
             perror("error code from execlp: ");
         }
-    }else{
+    }else{        
+        sem_wait(enc1);
+        printf("Input: ");
+        scanf("%s", sh_mem);
+        sem_post(p1);
+        
         wait(NULL);
-        if (shmdt(sh_mem1) == -1) {
-            fprintf(stderr, "shmdt in p1 failed\n");
+        if(detatch_from_block(sh_mem) == -1){
+            fprintf(stderr, "Failed to detach from memory block.\n");
         }
-        if(shmctl(shm_id, IPC_RMID, 0) == -1) {
-            fprintf(stderr, "shmctl(IPC_RMID) failed\n");
+        if(destroy_block(FIRST_FILE, 0) == -1) {
+            fprintf(stderr, "Failed to delete shared memory block.\n");
         }
-        if (semctl(mutex, 0, IPC_RMID) < 0) {
-            fprintf(stderr, "Could not delete mutex semaphore\n");
-        }
-        if (semctl(empty, 0, IPC_RMID) < 0) {
-            fprintf(stderr, "Could not delete empty semaphore\n");
-        }
-        if (semctl(full, 0, IPC_RMID) < 0) {
-            fprintf(stderr, "Could not delete full semaphore\n");
-        }
+        sem_close(p1);
+        sem_close(enc1);
     }
 }
