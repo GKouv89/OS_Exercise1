@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ipc.h>
 #include <fcntl.h>
 #include <semaphore.h>
@@ -39,11 +40,29 @@ int main(){
         }
     }else{        
         sem_wait(p1);
-        printf("ENC1 read %s from P1\n", sh_mem1);
+        
+        msg *input = malloc(sizeof(msg));
+        input->message = malloc(50*sizeof(char));
+        memcpy(input, sh_mem1, sizeof(int));
+        
+        memcpy(input->message, sh_mem1 + sizeof(int), input->length);
+        printf("ENC1 read %s from P1.\n", input->message);
+        
         sem_post(enc1);
         
         sem_wait(chan1);
-        memcpy(sh_mem2, sh_mem1, strlen(sh_mem1) + 1);
+        
+        MD5(input->message, input->length, input->hash);
+        printf("input->hash is: %s\n", (char*)input->hash);
+        memset(sh_mem2, 0, BLOCK_SIZE);
+        
+        memcpy(sh_mem2, input, sizeof(int));
+        memcpy(sh_mem2 + sizeof(int), input->message, input->length);
+        memcpy(sh_mem2 + sizeof(int) + input->length, input->hash, MD5_DIGEST_LENGTH*sizeof(char));
+        
+        free(input->message);
+        free(input);
+        
         sem_post(enc12);
         
         if(detatch_from_block(sh_mem2) == -1){

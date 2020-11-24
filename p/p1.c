@@ -4,6 +4,7 @@
 /* The former one is a binary semaphore, and is initialized as one */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/ipc.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -46,8 +47,20 @@ int main(){
         }
     }else{        
         sem_wait(enc1);
+        memset(sh_mem, 0, BLOCK_SIZE);
         printf("Input: ");
-        scanf("%s", sh_mem);
+        
+        msg *input = malloc(sizeof(msg));
+        input->message = malloc(50*sizeof(char));
+        fgets(input->message, BLOCK_SIZE, stdin);
+        input->message = strtok(input->message, "\n");
+        input->length = strlen(input->message);
+        memcpy(sh_mem, input, sizeof(int));
+        memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
+        
+        free(input->message);
+        free(input);
+        
         sem_post(p1);
         
         wait(NULL);

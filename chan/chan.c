@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -18,7 +20,18 @@ int main(){
     sem_t *chan1 = sem_open(CHAN_SEM, 0);
     
     sem_wait(enc12);
-    printf("CHAN read %s from ENC1\n", sh_mem2);
+    
+    msg *input = malloc(sizeof(msg));
+    input->message = malloc(50*sizeof(char));
+    memcpy(input, sh_mem2, sizeof(int));
+    
+    memcpy(input->message, sh_mem2 + sizeof(int), input->length);
+    memcpy(input->hash, sh_mem2 + sizeof(int) + input->length, MD5_DIGEST_LENGTH*sizeof(char));
+    printf("CHAN read %s from ENC1\n", input->message);
+    printf("input->hash is: %s\n", (char*)input->hash);
+    free(input->message);
+    free(input);
+    
     sem_post(chan1);
     
     if(detatch_from_block(sh_mem2) == -1){

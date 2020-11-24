@@ -9,4 +9,4 @@ make:
 	rm -f *.o
 
 clean:
-	rm -f enc/enc1 main 
+	rm -f chan/chan enc/enc1 main 
