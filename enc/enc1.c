@@ -27,11 +27,19 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Failed to create shared memory block between ENC1 and CHAN.\n");
     }
     
-    sem_t *p1 = sem_open(P1_SEM, 0);
-    sem_t *enc1 = sem_open(ENC1_CONS, 0);
+    sem_t *mutex1 = sem_open(MUTEX1, 0);    
+    sem_t *p1r = sem_open(P1_READ, 0);
+    sem_t *p1w = sem_open(P1_WRITE, 0);
+    sem_t *enc1r = sem_open(ENC1_READ, 0);
+    sem_t *enc1w = sem_open(ENC1_WRITE, 0);
     
-    sem_t *enc12 = sem_open(ENC1_PROD, O_CREAT, 0660, 0);
-    sem_t *chan1 = sem_open(CHAN_SEM, O_CREAT, 0660, 1);
+    sem_unlink(MUTEX2);
+    sem_unlink(CHAN_READ);
+    sem_unlink(CHAN_WRITE);
+    
+    sem_t *mutex2 = sem_open(MUTEX2, O_CREAT, 0660, 1);   
+    sem_t *chanr = sem_open(CHAN_READ, O_CREAT, 0660, 0);
+    sem_t *chanw = sem_open(CHAN_WRITE, O_CREAT, 0660, 0);
     
     pid_t pid = fork();
     if(pid == 0){
@@ -40,8 +48,8 @@ int main(int argc, char *argv[]){
             perror("error code from execlp: ");
         }
     }else{        
-        sem_wait(p1);
-        
+        sem_wait(enc1r);
+        sem_wait(mutex1);
         msg *input = malloc(sizeof(msg));
         input->message = malloc(50*sizeof(char));
         memcpy(input, sh_mem1, sizeof(int));
@@ -49,9 +57,11 @@ int main(int argc, char *argv[]){
         memcpy(input->message, sh_mem1 + sizeof(int), input->length);
         printf("ENC1 read %s from P1.\n", input->message);
         
-        sem_post(enc1);
+        sem_post(mutex1);
+        sem_post(enc1w);
         
-        sem_wait(chan1);
+        sem_wait(enc1w);
+        sem_wait(mutex2);
         
         MD5(input->message, input->length, input->hash);
         printf("input->hash is: %s\n", (char*)input->hash);
@@ -64,8 +74,10 @@ int main(int argc, char *argv[]){
         free(input->message);
         free(input);
         
-        sem_post(enc12);
+        sem_post(mutex2);
+        sem_post(chanr);
         
+        wait(NULL);
         if(detatch_from_block(sh_mem2) == -1){
             fprintf(stderr, "Failed to detach from ENC1->CHAN memory block.\n");
         }
@@ -75,9 +87,11 @@ int main(int argc, char *argv[]){
         if(detatch_from_block(sh_mem1) == -1){
             fprintf(stderr, "Failed to detach from memory block.\n");
         }
-        sem_close(p1);
-        sem_close(enc1);
-        sem_close(enc12);
-        sem_close(chan1);
+    
+        sem_close(mutex1);    
+        sem_close(p1r);
+        sem_close(p1w);
+        sem_close(enc1r);
+        sem_close(enc1w);
     }        
 }
