@@ -15,7 +15,8 @@
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
 
-int main(){
+int main(int argc, char *argv[]){
+    
     char *sh_mem1 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 0);
     if(sh_mem1 == NULL){
         fprintf(stderr, "Failed to create or attach to shared memory block in ENC1.\n");
@@ -35,7 +36,7 @@ int main(){
     pid_t pid = fork();
     if(pid == 0){
         char *chan = "chan/chan";
-        if(execlp(chan, chan, NULL) == -1){
+        if(execlp(chan, chan, argv[1], NULL) == -1){
             perror("error code from execlp: ");
         }
     }else{        

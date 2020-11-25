@@ -10,7 +10,7 @@
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
 
-int main(){
+int main(int argc, char *argv[]){
     char *sh_mem2 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 1);
     if(sh_mem2 == NULL){
         fprintf(stderr, "Failed to create shared memory block between ENC1 and CHAN.\n");

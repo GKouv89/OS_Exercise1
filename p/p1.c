@@ -22,9 +22,12 @@
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
 
-
-
-int main(){
+int main(int argc, char *argv[]){
+    
+    if(argc != 2){
+        printf("Correct program usage: ./main probability (must be a float between 0 and 1)\n");
+        return 1;
+    }
 
     // Shared memory operations
     char *sh_mem = attach_to_block(FIRST_FILE, BLOCK_SIZE, 0);
@@ -42,7 +45,7 @@ int main(){
     pid_t pid = fork();
     if(pid == 0){
         char *enc1 = "enc/enc1";
-        if(execlp(enc1, enc1, NULL) == -1){
+        if(execlp(enc1, enc1, argv[1], NULL) == -1){
             perror("error code from execlp: ");
         }
     }else{        
