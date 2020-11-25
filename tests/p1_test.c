@@ -72,9 +72,13 @@ int main(){
     sem_wait(enc1w); // ENC1 SHOULD *NOT* BE EXPECTING TO WRITE TO THE MEMORY
     // AND INSTEAD SHOULD WAIT TO READ FROM IT BEFORE WRITING ITS OWN MESSAGE
     // printf("P1 produces\n");
+    printf("Input: ");
+    fgets(input->message, 50, stdin);
     strcpy(sh_mem, input->message);
     sem_post(mutex);
     sem_post(enc1r);
+    
+    int term = 0;
 
     while(1){
         // printf("IN P1 WHILE, BEFORE IF\n");
@@ -94,18 +98,31 @@ int main(){
             sem_wait(p1w);
             sem_wait(mutex);
             // printf("P1 produces\n");
-            strcpy(sh_mem, input->message);
+            printf("Input: ");
+            fgets(input->message, 50, stdin);
+            if(strcmp(input->message, "TERM\n") == 0){
+                strcpy(sh_mem, "P1_TERM");
+            }else{
+                strcpy(sh_mem, input->message);
+            }
             sem_post(mutex);
             sem_post(enc1r);
         }else{
             sem_wait(p1r);
             sem_wait(mutex);
             // printf("P1 consumes\n");
-            printf("%s", sh_mem);
+            if(strcmp(sh_mem, "ENC1_TERM") == 0){
+                term = 1;
+            }else{
+                printf("%s", sh_mem);
+            }
             memset(sh_mem, 0, BLOCK_SIZE);
             // Now, P1 must write
             sem_post(mutex);
             sem_post(p1w);
+        }
+        if(term){
+            break;
         }
     }
     

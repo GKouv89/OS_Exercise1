@@ -44,6 +44,8 @@ int main(){
     
     /* ENC1 WILL CONSUME FIRST */
     
+    int term = 0;
+    
     while(1){
         // printf("IN ENC1 WHILE, BEFORE IF\n");
         // int val;
@@ -62,18 +64,36 @@ int main(){
             sem_wait(enc1w);
             sem_wait(mutex);
             // printf("ENC1 produces\n");
-            strcpy(sh_mem, input->message);
+            printf("Input: ");
+            fgets(input->message, 50, stdin);
+            if(strcmp(input->message, "TERM\n") == 0){
+                term = 1;
+                strcpy(sh_mem, "ENC1_TERM");
+            }else{
+                strcpy(sh_mem, input->message);
+            }
             sem_post(mutex);
             sem_post(p1r);
         }else{
             sem_wait(enc1r);
             sem_wait(mutex);
             // printf("ENC1 consumes\n");
-            printf("%s", sh_mem);
-            memset(sh_mem, 0, BLOCK_SIZE);
-            // Now, ENC1 must write
-            sem_post(mutex);
-            sem_post(enc1w);
+            if(strcmp(sh_mem, "P1_TERM") == 0){
+                term = 1;
+                strcpy(sh_mem, "ENC1_TERM");
+                // We want P1 to know that ENC1 terminated
+                sem_post(mutex);
+                sem_post(p1r);
+            }else{
+                printf("%s", sh_mem);
+                memset(sh_mem, 0, BLOCK_SIZE);
+                // Now, ENC1 must write
+                sem_post(mutex);
+                sem_post(enc1w);
+            }
+        }
+        if(term){
+            break;
         }
     }
     
