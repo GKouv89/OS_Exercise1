@@ -9,6 +9,7 @@ make:
 	gcc -g -c enc/enc2.c
 	gcc -o main2 enc2.o shared_memory.o -lpthread -lrt -lcrypto
 	rm -f *.o
+
 test:
 	gcc -g -c tests/enc1_test.c
 	gcc -g -c tests/p1_test.c
@@ -19,4 +20,4 @@ test:
 
 
 clean:
-	rm -f chan/chan enc/enc1 main 
+	rm -f chan/chan enc/enc1 main main2
