@@ -19,13 +19,30 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Failed to create shared memory block between ENC1 and CHAN.\n");
     }
 
-    sem_t *mutex2 = sem_open(MUTEX2, 0);   
-    sem_t *enc1r = sem_open(ENC1_READ, 0);
-    sem_t *enc1w = sem_open(ENC1_WRITE, 0);
-    sem_t *chanr = sem_open(CHAN_READ, 0);
-    sem_t *chanw = sem_open(CHAN_WRITE, 0);
+    char *sh_mem3 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 2);
+    if(sh_mem3 == NULL){
+        fprintf(stderr, "Failed to create shared memory block between CHAN and ENC2.\n");
+    }
 
-    sem_wait(chanr);
+    sem_t *mutex2 = sem_open(MUTEX2, 0);   
+    sem_t *enc12r = sem_open(ENC12_READ, 0);
+    sem_t *enc12w = sem_open(ENC12_WRITE, 0);
+    sem_t *chan1r = sem_open(CHAN1_READ, 0);
+    sem_t *chan1w = sem_open(CHAN1_WRITE, 0);
+    
+    sem_unlink(MUTEX3);
+    sem_unlink(CHAN2_READ);
+    sem_unlink(CHAN2_WRITE);
+    sem_unlink(ENC21_READ);
+    sem_unlink(ENC21_WRITE);
+    
+    sem_t *mutex3 = sem_open(MUTEX3, O_CREAT, 0660, 1);
+    sem_t *enc21r = sem_open(ENC21_READ, O_CREAT, 0660, 0);
+    sem_t *enc21w = sem_open(ENC21_WRITE, O_CREAT, 0660, 0);
+    sem_t *chan2r = sem_open(CHAN2_READ, O_CREAT, 0660, 0);
+    sem_t *chan2w = sem_open(CHAN2_WRITE, O_CREAT, 0660, 0);
+    
+    sem_wait(chan1r);
     sem_wait(mutex2);
     
     msg *input = malloc(sizeof(msg));
@@ -50,19 +67,37 @@ int main(int argc, char *argv[]){
     }
 
     printf("CHAN morphed the message to: %s\n", input->message);
+    memcpy(sh_mem3, input, sizeof(int));
+    memcpy(sh_mem3 + sizeof(int), input->message, input->length*sizeof(char));
+    memcpy(sh_mem3 + sizeof(int) + input->length, input->hash, MD5_DIGEST_LENGTH*sizeof(char));
+    
     free(input->message);
     free(input);
     
     sem_post(mutex2);
-    sem_post(chanw);
+    sem_post(enc21r); 
     
     if(detatch_from_block(sh_mem2) == -1){
         fprintf(stderr, "Failed to detach from ENC1->CHAN memory block.\n");
     }
+    
+    if(detatch_from_block(sh_mem3) == -1){
+        fprintf(stderr, "Failed to detach from CHAN->ENC2 memory block.\n");
+    }
+    
+    if(destroy_block(FIRST_FILE, 2) == -1) {
+        fprintf(stderr, "Failed to delete CHAN->ENC2 shared memory block.\n");
+    }
 
     sem_close(mutex2);
-    sem_close(chanr);
-    sem_close(chanw);
-    sem_close(enc1r);
-    sem_close(enc1w);
+    sem_close(chan1r);
+    sem_close(chan1w);
+    sem_close(enc12r);
+    sem_close(enc12w);
+
+    sem_close(mutex3);
+    sem_close(chan2r);
+    sem_close(chan2w);
+    sem_close(enc21r);
+    sem_close(enc21w);
 }

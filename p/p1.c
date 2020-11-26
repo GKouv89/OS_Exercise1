@@ -39,15 +39,15 @@ int main(int argc, char *argv[]){
     sem_unlink(MUTEX1);
     sem_unlink(P1_READ);
     sem_unlink(P1_WRITE);
-    sem_unlink(ENC1_READ);
-    sem_unlink(ENC1_WRITE);
+    sem_unlink(ENC11_READ);
+    sem_unlink(ENC11_WRITE);
     
     // MUTEX is the semaphore responsible for checking who uses the shared mem segment
     sem_t *mutex = sem_open(MUTEX1, O_CREAT, 0600, 1);    
     sem_t *p1r = sem_open(P1_READ, O_CREAT, 0660, 0);
     sem_t *p1w = sem_open(P1_WRITE, O_CREAT, 0660, 1);
-    sem_t *enc1r = sem_open(ENC1_READ, O_CREAT, 0660, 0);
-    sem_t *enc1w = sem_open(ENC1_WRITE, O_CREAT, 0660, 0);
+    sem_t *enc11r = sem_open(ENC11_READ, O_CREAT, 0660, 0);
+    sem_t *enc11w = sem_open(ENC11_WRITE, O_CREAT, 0660, 0);
     
     pid_t pid = fork();
     if(pid == 0){
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
         free(input);
         
         sem_post(mutex);
-        sem_post(enc1r);
+        sem_post(enc11r);
         
         wait(NULL);
         if(detatch_from_block(sh_mem) == -1){
@@ -85,8 +85,8 @@ int main(int argc, char *argv[]){
         }
         sem_close(mutex);
         sem_close(p1r);
-        sem_close(enc1r);
+        sem_close(enc11r);
         sem_close(p1w);
-        sem_close(enc1w);
+        sem_close(enc11w);
     }
 }

@@ -30,16 +30,20 @@ int main(int argc, char *argv[]){
     sem_t *mutex1 = sem_open(MUTEX1, 0);    
     sem_t *p1r = sem_open(P1_READ, 0);
     sem_t *p1w = sem_open(P1_WRITE, 0);
-    sem_t *enc1r = sem_open(ENC1_READ, 0);
-    sem_t *enc1w = sem_open(ENC1_WRITE, 0);
+    sem_t *enc11r = sem_open(ENC11_READ, 0);
+    sem_t *enc11w = sem_open(ENC11_WRITE, 0);
     
     sem_unlink(MUTEX2);
-    sem_unlink(CHAN_READ);
-    sem_unlink(CHAN_WRITE);
+    sem_unlink(ENC12_READ);
+    sem_unlink(ENC12_WRITE);
+    sem_unlink(CHAN1_READ);
+    sem_unlink(CHAN1_WRITE);
     
-    sem_t *mutex2 = sem_open(MUTEX2, O_CREAT, 0660, 1);   
-    sem_t *chanr = sem_open(CHAN_READ, O_CREAT, 0660, 0);
-    sem_t *chanw = sem_open(CHAN_WRITE, O_CREAT, 0660, 0);
+    sem_t *mutex2 = sem_open(MUTEX2, O_CREAT, 0660, 1);
+    sem_t *enc12r = sem_open(ENC12_READ, O_CREAT, 0660, 0);
+    sem_t *enc12w = sem_open(ENC12_WRITE, O_CREAT, 0660, 0);
+    sem_t *chan1r = sem_open(CHAN1_READ, O_CREAT, 0660, 0);
+    sem_t *chan1w = sem_open(CHAN1_WRITE, O_CREAT, 0660, 0);
     
     pid_t pid = fork();
     if(pid == 0){
@@ -48,7 +52,7 @@ int main(int argc, char *argv[]){
             perror("error code from execlp: ");
         }
     }else{        
-        sem_wait(enc1r);
+        sem_wait(enc11r);
         sem_wait(mutex1);
         msg *input = malloc(sizeof(msg));
         input->message = malloc(50*sizeof(char));
@@ -58,9 +62,9 @@ int main(int argc, char *argv[]){
         printf("ENC1 read %s from P1.\n", input->message);
         
         sem_post(mutex1);
-        sem_post(enc1w);
+        sem_post(enc12w);
         
-        sem_wait(enc1w);
+        sem_wait(enc12w);
         sem_wait(mutex2);
         
         MD5(input->message, input->length, input->hash);
@@ -75,7 +79,7 @@ int main(int argc, char *argv[]){
         free(input);
         
         sem_post(mutex2);
-        sem_post(chanr);
+        sem_post(chan1r);
         
         wait(NULL);
         if(detatch_from_block(sh_mem2) == -1){
@@ -91,7 +95,13 @@ int main(int argc, char *argv[]){
         sem_close(mutex1);    
         sem_close(p1r);
         sem_close(p1w);
-        sem_close(enc1r);
-        sem_close(enc1w);
+        sem_close(enc11r);
+        sem_close(enc11w);
+        
+        sem_close(mutex2);
+        sem_close(enc12r);
+        sem_close(enc12w);
+        sem_close(chan1r);
+        sem_close(chan1w);
     }        
 }

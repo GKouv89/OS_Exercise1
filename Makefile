@@ -6,6 +6,8 @@ make:
 	gcc -o chan/chan chan.o shared_memory.o -lpthread -lrt
 	gcc -o enc/enc1 enc1.o shared_memory.o -lpthread -lrt -lcrypto
 	gcc -o main p1.o shared_memory.o -lpthread -lrt
+	gcc -g -c enc/enc2.c
+	gcc -o main2 enc2.o shared_memory.o -lpthread -lrt -lcrypto
 	rm -f *.o
 test:
 	gcc -g -c tests/enc1_test.c
