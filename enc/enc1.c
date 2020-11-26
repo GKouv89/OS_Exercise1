@@ -21,11 +21,12 @@ int main(int argc, char *argv[]){
     if(sh_mem1 == NULL){
         fprintf(stderr, "Failed to create or attach to shared memory block in ENC1.\n");
     }
-    
+
     char *sh_mem2 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 1);
     if(sh_mem2 == NULL){
         fprintf(stderr, "Failed to create shared memory block between ENC1 and CHAN.\n");
     }
+    memset(sh_mem2, 0, BLOCK_SIZE);
     
     sem_t *mutex1 = sem_open(MUTEX1, 0);    
     sem_t *p1r = sem_open(P1_READ, 0);
@@ -68,7 +69,6 @@ int main(int argc, char *argv[]){
         sem_wait(mutex2);
         
         MD5(input->message, input->length, input->hash);
-        printf("input->hash is: %s\n", (char*)input->hash);
         memset(sh_mem2, 0, BLOCK_SIZE);
         
         memcpy(sh_mem2, input, sizeof(int));
