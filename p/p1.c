@@ -34,7 +34,11 @@ int main(int argc, char *argv[]){
     if(sh_mem == NULL){
         fprintf(stderr, "Failed to create or attach to shared memory block in P1.\n");
     }
-        
+    memset(sh_mem, 0, BLOCK_SIZE);
+    
+    int direction = 1;
+    int transmitted = 0;
+    
     // Semaphore ops. P1 will create the named semaphores, ENC1 will simply request them.
     sem_unlink(MUTEX1);
     sem_unlink(P1_READ);
@@ -55,27 +59,46 @@ int main(int argc, char *argv[]){
         if(execlp(enc1, enc1, argv[1], NULL) == -1){
             perror("error code from execlp: ");
         }
-    }else{        
-        sem_wait(p1w);
-        sem_wait(mutex);
-        
+    }else{
         msg *input = malloc(sizeof(msg));
         input->message = malloc(50*sizeof(char));
-        memset(sh_mem, 0, BLOCK_SIZE);
         
-        printf("Input: ");
-        fgets(input->message, BLOCK_SIZE, stdin);
-        input->message = strtok(input->message, "\n");
-        input->length = strlen(input->message);
-        memcpy(sh_mem, input, sizeof(int));
-        memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
+        while(1){
+            if(direction == 1 && transmitted == 0){
+                sem_wait(p1w);
+                sem_wait(mutex);
+                
+                printf("Input: ");
+                fgets(input->message, BLOCK_SIZE, stdin);
+                input->message = strtok(input->message, "\n");
+                input->length = strlen(input->message);
+                memcpy(sh_mem, input, sizeof(int));
+                memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
+                transmitted = 1;
+                
+                sem_post(mutex);
+                sem_post(enc11r);
+
+            }else if(direction == 1 && transmitted == 1){
+                sem_wait(p1r);
+                sem_wait(mutex);
+                
+                memcpy(input, sh_mem, sizeof(int));
+                if(memcmp(sh_mem + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
+                    printf("P1 RECEIVED TRANSMISSION_OK\n");
+                    direction = 2;
+                    sem_post(mutex);
+                    sem_post(p1w);
+                    
+                    // ALL_SET MESSAGE TRANSMISSION
+                }
+                
+            }
+        }
         
         free(input->message);
         free(input);
-        
-        sem_post(mutex);
-        sem_post(enc11r);
-        
+       
         wait(NULL);
         if(detatch_from_block(sh_mem) == -1){
             fprintf(stderr, "Failed to detach from memory block.\n");

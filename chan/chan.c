@@ -92,12 +92,23 @@ int main(int argc, char *argv[]){
             
             memcpy(input, sh_mem3, sizeof(int));
             if(memcmp(sh_mem3 + sizeof(int), "RETRANSMIT", input->length) == 0){
-                printf("RETRANSMITTING\n");
+                transmitted = 0;
+                sem_post(mutex3);
+                sem_post(chan1r);
+            }else if(memcmp(sh_mem3 + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
+                printf("CHAN SAID TRANS_OK\n");
+                sem_post(mutex3);
+                sem_post(chan1w);
+                
+                sem_wait(chan1w);
+                sem_wait(mutex2);
+                memcpy(sh_mem2, sh_mem3, sizeof(int) + input->length);
+                
+                sem_post(mutex2);
+                sem_post(enc12r);
             } 
-            transmitted = 0;
             
-            sem_post(mutex3);
-            sem_post(chan1r);
+            
         }
     }
     

@@ -19,6 +19,12 @@
 #define ENC21_READ "/enc21read"
 #define ENC21_WRITE "/enc21write"
 
+#define MUTEX4 "/mem4mutex"
+#define ENC22_READ "/enc22read"
+#define ENC22_WRITE "/enc22write"
+#define P2_READ "/p2read"
+#define P2_WRITE "/p2write"
+
 // SEMAPHORES FOR TEST FOLDER FILES
 // #define MUTEX1 "/mutex1"
 // #define P1_READ "/p1read"

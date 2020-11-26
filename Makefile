@@ -7,7 +7,9 @@ make:
 	gcc -o enc/enc1 enc1.o shared_memory.o -lpthread -lrt -lcrypto
 	gcc -o main p1.o shared_memory.o -lpthread -lrt
 	gcc -g -c enc/enc2.c
-	gcc -o main2 enc2.o shared_memory.o -lpthread -lrt -lcrypto
+	gcc -g -c p/p2.c
+	gcc -o enc/enc2 enc2.o shared_memory.o -lpthread -lrt -lcrypto
+	gcc -o main2 p2.o shared_memory.o -lpthread -lrt
 	rm -f *.o
 
 test:
