@@ -126,6 +126,62 @@ int main(){
                 sem_post(mutex3);
                 sem_post(chan2r);
             }
+        }else if(direction == 2 && transmitted == 0){
+            sem_wait(enc22r);
+            sem_wait(mutex4);
+            
+            memcpy(input, sh_mem_fin, sizeof(int));
+            if(memcmp(sh_mem_fin + sizeof(int), "ALL_SET", input->length) == 0){
+                sem_post(mutex4);
+                sem_post(enc21w);
+                
+                sem_wait(enc21w);
+                sem_wait(mutex3);
+                
+                memcpy(sh_mem3, sh_mem_fin, sizeof(int) + input->length);
+                direction = 1;
+                
+                sem_post(mutex3);
+                sem_post(chan2r);
+            }else{
+                memcpy(input->message, sh_mem_fin + sizeof(int), input->length);
+                sem_post(mutex4);
+                sem_post(enc21w);
+                    
+                sem_wait(enc21w);
+                sem_wait(mutex3);
+                
+                for(int i = 0; i < MD5_DIGEST_LENGTH; i++){
+                    input->hash[i] = '\0';
+                }
+                MD5(input->message, input->length, input->hash);
+                memset(sh_mem3, 0, BLOCK_SIZE);
+                    
+                memcpy(sh_mem3, input, sizeof(int));
+                memcpy(sh_mem3 + sizeof(int), input->message, input->length);
+                memcpy(sh_mem3 + sizeof(int) + input->length, input->hash, MD5_DIGEST_LENGTH*sizeof(char));
+                transmitted = 1;
+                sem_post(mutex3);
+                sem_post(chan2r);
+            }
+        }else{
+            sem_wait(enc21r);
+            sem_wait(mutex3);
+            
+            memcpy(input, sh_mem3, sizeof(int));
+            if(memcmp(sh_mem3 + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
+                sem_post(mutex3);
+                sem_post(enc22w);
+                
+                sem_wait(enc22w);
+                sem_wait(mutex4);
+                
+                memcpy(sh_mem_fin, sh_mem3, sizeof(int) + input->length);
+                transmitted = 0;
+                
+                sem_post(mutex4);
+                sem_post(p2r);
+            }
         }
         
     }

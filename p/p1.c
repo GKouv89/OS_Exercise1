@@ -100,6 +100,39 @@ int main(int argc, char *argv[]){
                     sem_post(enc11r);
                 }
                 
+            }else if(direction == 2){
+                sem_wait(p1r);
+                sem_wait(mutex);
+                
+                memcpy(input, sh_mem, sizeof(int));
+                if(memcmp(sh_mem + sizeof(int), "ALL_SET", input->length) == 0){
+                    sem_post(p1w);
+                    
+                    sem_wait(p1w);
+                    printf("P1 RECEIVED ALL_SET\n");
+                    direction = 1;
+                    printf("Input: ");
+                    fgets(input->message, BLOCK_SIZE, stdin);
+                    input->message = strtok(input->message, "\n");
+                    input->length = strlen(input->message);
+                    memcpy(sh_mem, input, sizeof(int));
+                    memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
+                    transmitted = 1;
+                    
+                    sem_post(mutex);
+                    sem_post(enc11r);
+                }else{
+                    memcpy(input->message, sh_mem + sizeof(int), input->length);
+                
+                    printf("Received: %s\n", input->message);
+                    
+                    input->length = strlen("TRANSMISSION_OK");
+                    memcpy(sh_mem, input, sizeof(int));
+                    memcpy(sh_mem + sizeof(int), "TRANSMISSION_OK", input->length);
+                    
+                    sem_post(mutex);
+                    sem_post(enc11r);
+                }
             }
         }
         
