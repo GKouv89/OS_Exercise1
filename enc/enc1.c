@@ -148,6 +148,18 @@ int main(int argc, char *argv[]){
                     
                     sem_post(mutex1);
                     sem_post(p1r);
+                }else if(memcmp(sh_mem2 + sizeof(int), "TERM", input->length) == 0){
+                    sem_post(mutex2);
+                    sem_post(enc11w);
+                    
+                    sem_wait(enc11w);
+                    sem_wait(mutex1);
+
+                    memcpy(sh_mem1, sh_mem2, sizeof(int) + input->length);
+                    term = 1;
+                    
+                    sem_post(mutex1);
+                    sem_post(p1r);
                 }else{
                     memcpy(input->message, sh_mem2 + sizeof(int), input->length);
                     memcpy(input->hash, sh_mem2 + sizeof(int) + input->length, MD5_DIGEST_LENGTH*sizeof(char));

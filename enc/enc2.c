@@ -160,6 +160,18 @@ int main(){
                 
                 sem_post(mutex3);
                 sem_post(chan2r);
+            }else if (memcmp(sh_mem_fin + sizeof(int), "TERM", input->length) == 0){
+                sem_post(mutex4);
+                sem_post(enc21w);
+                
+                sem_wait(enc21w);
+                sem_wait(mutex3);
+                
+                memcpy(sh_mem3, sh_mem_fin, sizeof(int) + input->length);
+                term = 1;
+                
+                sem_post(mutex3);
+                sem_post(chan2r);
             }else{
                 memcpy(input->message, sh_mem_fin + sizeof(int), input->length);
                 sem_post(mutex4);
@@ -207,7 +219,6 @@ int main(){
     
     free(input->message);
     free(input);
-    
     
     if(detatch_from_block(sh_mem_fin) == -1){
         fprintf(stderr, "Failed to detach from ENC2->P2 memory block.\n");

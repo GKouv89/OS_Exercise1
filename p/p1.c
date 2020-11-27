@@ -134,6 +134,8 @@ int main(int argc, char *argv[]){
                     
                     sem_post(mutex);
                     sem_post(enc11r);
+                }else if(memcmp(sh_mem + sizeof(int), "TERM", input->length) == 0){
+                    term = 1;
                 }else{
                     memcpy(input->message, sh_mem + sizeof(int), input->length);
                 

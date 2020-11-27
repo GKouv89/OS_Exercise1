@@ -83,6 +83,10 @@ int main(){
                     printf("Input: ");
                     fgets(input->message, BLOCK_SIZE, stdin);
                     input->message = strtok(input->message, "\n");
+                    if(strcmp(input->message, "bye") == 0){
+                        strcpy(input->message, "TERM");
+                        term = 1;
+                    }
                     input->length = strlen(input->message);
                     memcpy(sh_mem_fin, input, sizeof(int));
                     memcpy(sh_mem_fin + sizeof(int), input->message, input->length*sizeof(char));
