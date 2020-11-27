@@ -39,6 +39,7 @@ int main(){
     
     int direction = 1;
     int transmitted = 0;
+    int term = 0;
     
     // Semaphore ops. P1 will create the named semaphores, ENC1 will simply request them.
     sem_unlink(MUTEX4);
@@ -86,10 +87,11 @@ int main(){
                     memcpy(sh_mem_fin, input, sizeof(int));
                     memcpy(sh_mem_fin + sizeof(int), input->message, input->length*sizeof(char));
                     transmitted = 1;
-                    printf("This is about to leave P2: %s\n", input->message);
                     
                     sem_post(mutex4);
                     sem_post(enc22r);
+                }else if(memcmp(sh_mem_fin + sizeof(int), "TERM", input->length) == 0){
+                    term = 1;
                 }else{
                     memcpy(input->message, sh_mem_fin + sizeof(int), input->length);
                 
@@ -126,6 +128,9 @@ int main(){
                     sem_post(enc22r);
                 }
             }
+            if(term){
+                break;
+            }
         }
         
         free(input->message);
@@ -135,7 +140,7 @@ int main(){
         if(detatch_from_block(sh_mem_fin) == -1){
             fprintf(stderr, "Failed to detach from memory block.\n");
         }
-        if(destroy_block(FIRST_FILE, 0) == -1) {
+        if(destroy_block(FIRST_FILE, 3) == -1) {
             fprintf(stderr, "Failed to delete shared memory block.\n");
         }
         

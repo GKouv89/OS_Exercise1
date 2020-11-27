@@ -38,6 +38,7 @@ int main(int argc, char *argv[]){
     
     int direction = 1;
     int transmitted = 0;
+    int term = 0;
     
     // Semaphore ops. P1 will create the named semaphores, ENC1 will simply request them.
     sem_unlink(MUTEX1);
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]){
     sem_t *enc11r = sem_open(ENC11_READ, O_CREAT, 0660, 0);
     sem_t *enc11w = sem_open(ENC11_WRITE, O_CREAT, 0660, 0);
     
+    printf("Write 'bye' for termination\n");
     pid_t pid = fork();
     if(pid == 0){
         char *enc1 = "enc/enc1";
@@ -71,6 +73,10 @@ int main(int argc, char *argv[]){
                 printf("Input: ");
                 fgets(input->message, BLOCK_SIZE, stdin);
                 input->message = strtok(input->message, "\n");
+                if(strcmp(input->message, "bye") == 0){
+                    strcpy(input->message, "TERM");
+                    term = 1;
+                }
                 input->length = strlen(input->message);
                 memcpy(sh_mem, input, sizeof(int));
                 memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
@@ -87,6 +93,7 @@ int main(int argc, char *argv[]){
                 if(memcmp(sh_mem + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
                     direction = 2;
                     transmitted = 0;
+                    printf("P1 RECEIVED TRANSMISSION OK\n");
                     sem_post(mutex);
                     sem_post(p1w);
                     
@@ -116,6 +123,10 @@ int main(int argc, char *argv[]){
                     printf("Input: ");
                     fgets(input->message, BLOCK_SIZE, stdin);
                     input->message = strtok(input->message, "\n");
+                    if(strcmp(input->message, "bye") == 0){
+                        strcpy(input->message, "TERM");
+                        term = 1;
+                    }
                     input->length = strlen(input->message);
                     memcpy(sh_mem, input, sizeof(int));
                     memcpy(sh_mem + sizeof(int), input->message, input->length*sizeof(char));
@@ -135,6 +146,9 @@ int main(int argc, char *argv[]){
                     sem_post(mutex);
                     sem_post(enc11r);
                 }
+            }
+            if(term){
+                break;
             }
         }
         

@@ -33,6 +33,7 @@ int main(){
     
     int direction = 1;
     int transmitted = 0; // When message is OK, this turns to 1.
+    int term = 0;
     
     sem_t *mutex3 = sem_open(MUTEX3, 0);
     sem_t *enc21r = sem_open(ENC21_READ, 0);
@@ -66,7 +67,21 @@ int main(){
                 sem_wait(mutex4);
                 
                 memcpy(sh_mem_fin, sh_mem3, sizeof(int) + input->length);
+                clear_buffer(input);
+                memset(sh_mem3, 0, BLOCK_SIZE);
                 direction = 2;
+                
+                sem_post(mutex4);
+                sem_post(p2r);
+            }else if(memcmp(sh_mem3 + sizeof(int), "TERM", input->length) == 0){
+                sem_post(mutex3);
+                sem_post(enc22w);
+                
+                sem_wait(enc22w);
+                sem_wait(mutex4);
+                
+                memcpy(sh_mem_fin, sh_mem3, sizeof(int) + input->length);
+                term = 1;
                 
                 sem_post(mutex4);
                 sem_post(p2r);
@@ -139,6 +154,8 @@ int main(){
                 sem_wait(mutex3);
                 
                 memcpy(sh_mem3, sh_mem_fin, sizeof(int) + input->length);
+                memset(sh_mem_fin, 0, BLOCK_SIZE);
+                clear_buffer(input);
                 direction = 1;
                 
                 sem_post(mutex3);
@@ -183,7 +200,9 @@ int main(){
                 sem_post(p2r);
             }
         }
-        
+        if(term){
+            break;
+        }
     }
     
     free(input->message);

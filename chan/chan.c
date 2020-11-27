@@ -29,6 +29,7 @@ int main(int argc, char *argv[]){
     
     int direction = 1;
     int transmitted = 0; // Zero right before a transmission attempt, 1 afterwards
+    int term = 0;
     
     sem_t *mutex2 = sem_open(MUTEX2, 0);   
     sem_t *enc12r = sem_open(ENC12_READ, 0);
@@ -69,6 +70,18 @@ int main(int argc, char *argv[]){
                 memset(sh_mem2, 0, BLOCK_SIZE);
                 clear_buffer(input);
                 
+                sem_post(mutex3);
+                sem_post(enc21r);
+            }else if(memcmp(sh_mem2 + sizeof(int), "TERM", input->length) == 0){
+                sem_post(mutex2);
+                sem_post(chan2w);
+                
+                sem_wait(chan2w);
+                sem_wait(mutex3);
+                
+                memcpy(sh_mem3, sh_mem2, sizeof(int) + input->length);
+                term = 1;
+            
                 sem_post(mutex3);
                 sem_post(enc21r);
             }else{
@@ -196,6 +209,9 @@ int main(int argc, char *argv[]){
                 sem_post(mutex3);
                 sem_post(enc21r);
             } 
+        }
+        if(term){
+            break;
         }
     }
     
