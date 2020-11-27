@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
 #include "shared_memory.h"
+#include "message_format.h"
 
 char *attach_to_block(char* file_name, int size, int arg2){
     key_t shmem_key = ftok(file_name, arg2);
@@ -47,4 +49,10 @@ int destroy_block(char *file_name, int arg2){
     }
 
     return shmctl(shmem_id, IPC_RMID, NULL);
+}
+
+void clear_buffer(msg *input){
+    memset(input->message, 0, 50);
+    memset(input + sizeof(int) + sizeof(char*), 0, MD5_DIGEST_LENGTH);
+    memset(input, 0, sizeof(int));
 }

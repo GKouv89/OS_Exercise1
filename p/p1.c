@@ -96,6 +96,8 @@ int main(int argc, char *argv[]){
                     input->length = strlen("ALL_SET");
                     memcpy(sh_mem, input, sizeof(int));
                     memcpy(sh_mem + sizeof(int), "ALL_SET", input->length);
+                    clear_buffer(input);
+                    
                     sem_post(mutex);
                     sem_post(enc11r);
                 }
@@ -109,7 +111,7 @@ int main(int argc, char *argv[]){
                     sem_post(p1w);
                     
                     sem_wait(p1w);
-                    printf("P1 RECEIVED ALL_SET\n");
+                    clear_buffer(input);
                     direction = 1;
                     printf("Input: ");
                     fgets(input->message, BLOCK_SIZE, stdin);

@@ -73,6 +73,9 @@ int main(int argc, char *argv[]){
                     sem_wait(mutex2);
                     direction = 2;
                     memcpy(sh_mem2, sh_mem1, sizeof(int) + input->length);
+                    memset(sh_mem1, 0, BLOCK_SIZE);
+                    clear_buffer(input);
+                    
                     sem_post(mutex2);
                     sem_post(chan1r);
                 }else{
@@ -128,6 +131,9 @@ int main(int argc, char *argv[]){
                     sem_wait(mutex1);
                     direction = 1;
                     memcpy(sh_mem1, sh_mem2, sizeof(int) + input->length);
+                    memset(sh_mem2, 0, BLOCK_SIZE);
+                    clear_buffer(input);
+                    
                     sem_post(mutex1);
                     sem_post(p1r);
                 }else{

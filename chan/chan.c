@@ -66,6 +66,8 @@ int main(int argc, char *argv[]){
                 
                 direction = 2;
                 memcpy(sh_mem3, sh_mem2, sizeof(int) + input->length);
+                memset(sh_mem2, 0, BLOCK_SIZE);
+                clear_buffer(input);
                 
                 sem_post(mutex3);
                 sem_post(enc21r);
@@ -137,6 +139,8 @@ int main(int argc, char *argv[]){
                 
                 direction = 1;
                 memcpy(sh_mem2, sh_mem3, sizeof(int) + input->length);
+                memset(sh_mem3, 0, BLOCK_SIZE);
+                clear_buffer(input);
                 
                 sem_post(mutex2);
                 sem_post(enc12r);

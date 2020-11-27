@@ -76,6 +76,9 @@ int main(){
                     
                     sem_wait(p2w);
                     direction = 2;
+                    
+                    clear_buffer(input);
+                    
                     printf("Input: ");
                     fgets(input->message, BLOCK_SIZE, stdin);
                     input->message = strtok(input->message, "\n");
@@ -83,6 +86,7 @@ int main(){
                     memcpy(sh_mem_fin, input, sizeof(int));
                     memcpy(sh_mem_fin + sizeof(int), input->message, input->length*sizeof(char));
                     transmitted = 1;
+                    printf("This is about to leave P2: %s\n", input->message);
                     
                     sem_post(mutex4);
                     sem_post(enc22r);
@@ -112,9 +116,12 @@ int main(){
                     // ALL_SET MESSAGE TRANSMISSION
                     sem_wait(p2w);
                     sem_wait(mutex4);
+                    
                     input->length = strlen("ALL_SET");
                     memcpy(sh_mem_fin, input, sizeof(int));
                     memcpy(sh_mem_fin + sizeof(int), "ALL_SET", input->length);
+                    clear_buffer(input);
+                    
                     sem_post(mutex4);
                     sem_post(enc22r);
                 }
