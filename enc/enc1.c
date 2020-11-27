@@ -65,43 +65,54 @@ int main(int argc, char *argv[]){
                 sem_wait(mutex1);
                 memcpy(input, sh_mem1, sizeof(int));
                 
-                memcpy(input->message, sh_mem1 + sizeof(int), input->length);
-                printf("ENC1 read %s from P1.\n", input->message);
+                if(memcmp(sh_mem1 + sizeof(int), "ALL_SET", input->length) == 0){
+                    sem_post(mutex1);
+                    sem_post(enc12w);
+                    
+                    sem_wait(enc12w);
+                    sem_wait(mutex2);
+                    direction = 2;
+                    memcpy(sh_mem2, sh_mem1, sizeof(int) + input->length);
+                    sem_post(mutex2);
+                    sem_post(chan1r);
+                }else{
+                    memcpy(input->message, sh_mem1 + sizeof(int), input->length);
+                    printf("ENC1 read %s from P1.\n", input->message);
+                    
+                    sem_post(mutex1);
+                    sem_post(enc12w);
+                    
+                    sem_wait(enc12w);
+                    sem_wait(mutex2);
+                    
+                    MD5(input->message, input->length, input->hash);
+                    memset(sh_mem2, 0, BLOCK_SIZE);
+                    
+                    memcpy(sh_mem2, input, sizeof(int));
+                    memcpy(sh_mem2 + sizeof(int), input->message, input->length);
+                    memcpy(sh_mem2 + sizeof(int) + input->length, input->hash, MD5_DIGEST_LENGTH*sizeof(char));
+                    transmitted = 1;
+                    sem_post(mutex2);
+                    sem_post(chan1r);
+                }
                 
-                sem_post(mutex1);
-                sem_post(enc12w);
-                
-                sem_wait(enc12w);
-                sem_wait(mutex2);
-                
-                MD5(input->message, input->length, input->hash);
-                memset(sh_mem2, 0, BLOCK_SIZE);
-                
-                memcpy(sh_mem2, input, sizeof(int));
-                memcpy(sh_mem2 + sizeof(int), input->message, input->length);
-                memcpy(sh_mem2 + sizeof(int) + input->length, input->hash, MD5_DIGEST_LENGTH*sizeof(char));
-                transmitted = 1;
-                
-                sem_post(mutex2);
-                sem_post(chan1r);
             }else if(direction == 1 && transmitted == 1){
                 sem_wait(enc12r);
                 sem_wait(mutex2);
                 
                 memcpy(input, sh_mem2, sizeof(int));
-                
+                    
                 if(memcmp(sh_mem2 + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
-                    printf("ENC1 TRANS_OK\n");
                     sem_post(mutex2);
                     sem_post(enc11w);
                     
                     sem_wait(enc11w);
                     sem_wait(mutex1);
                     memcpy(sh_mem1, sh_mem2, sizeof(int) + input->length);
+                    transmitted = 0;
                     sem_post(mutex1);
                     sem_post(p1r);
                 }
-                
             }
         }
         

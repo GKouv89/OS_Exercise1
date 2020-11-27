@@ -19,6 +19,7 @@ char *attach_to_block(char* file_name, int size, int arg2){
         return NULL;
     }
     
+    
     char *sh_mem = shmat(shmem_id, NULL, 0);
     if(sh_mem == (char *)-1){
         return NULL;

@@ -85,12 +85,19 @@ int main(int argc, char *argv[]){
                 
                 memcpy(input, sh_mem, sizeof(int));
                 if(memcmp(sh_mem + sizeof(int), "TRANSMISSION_OK", input->length) == 0){
-                    printf("P1 RECEIVED TRANSMISSION_OK\n");
                     direction = 2;
+                    transmitted = 0;
                     sem_post(mutex);
                     sem_post(p1w);
                     
                     // ALL_SET MESSAGE TRANSMISSION
+                    sem_wait(p1w);
+                    sem_wait(mutex);
+                    input->length = strlen("ALL_SET");
+                    memcpy(sh_mem, input, sizeof(int));
+                    memcpy(sh_mem + sizeof(int), "ALL_SET", input->length);
+                    sem_post(mutex);
+                    sem_post(enc11r);
                 }
                 
             }
