@@ -51,4 +51,4 @@ test:
 	rm -f *.o
 
 clean:
-	rm -f chan/chan enc/enc2 enc/enc1 main main2
+	rm -f chan/chan enc/enc2 enc/enc1 main main2 *.o
