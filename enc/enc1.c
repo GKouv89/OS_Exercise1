@@ -1,3 +1,11 @@
+/* ENC1 attaches to the shared memory segment that is shares with P1, previously
+    created by the latter. Then, it creates a second memory segment that it will shared
+    with CHAN. 
+    ENC1 uses 10 semaphores; five aforementioned in p1.c , of which enc11_read indicates
+    that it is enc1's turn to read from the shared memory segment it shares with p1,
+    and enc11_write indicates that it is its turn to write to that segment, and five symmetrical
+    semaphores for the second shared memory segment.*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
@@ -10,7 +18,6 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-// #include "../p/common_keys1.h"
 #include "../shared/shared_memory.h"
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
@@ -19,16 +26,33 @@ int main(int argc, char *argv[]){
     
     char *sh_mem1 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 0);
     if(sh_mem1 == NULL){
-        fprintf(stderr, "Failed to create or attach to shared memory block in ENC1.\n");
+        fprintf(stderr, "Failed to attach to P1->ENC1 shared memory block (in ENC1).\n");
     }
 
     char *sh_mem2 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 1);
     if(sh_mem2 == NULL){
-        fprintf(stderr, "Failed to create shared memory block between ENC1 and CHAN.\n");
+        fprintf(stderr, "Failed to create ENC1->CHAN shared memory block (in ENC1).\n");
     }
     memset(sh_mem2, 0, BLOCK_SIZE);
     
     int direction = 1;
+    // Here, transmitted's usage is a bit different to the one in p1.c.
+    // If direction is 1 and transmitted is 0 then it is the first time
+    // ENC1 receives a message from P1 during a specific send operation.
+    // So, all it does is calculate the checksum and write it to CHAN
+    // along with the rest of the message. The message is not altered.
+    // If direction is 1 and transmitted is 1, then the message has been
+    // transmitted to the channel, and ENC1 expects the "TRANSMISSION_OK"
+    // control message.
+    // If direction is 2 and transmitted is 0, then ENC1 has either
+    // not received any message from CHAN during a specific send operation,
+    // received the message but the message failed to pass the 
+    // MD5 check, or received the message and transmitted it to P1
+    // as well as transmitted "TRANSMISSION_OK" to CHAN and is expecting
+    // confirmation ("ALL_SET") from P2.
+    // If direction is 2 and transmitted is 1, then ENC1 has received the message
+    // correctly from CHAN and has transmitted it to P1 and is yet to receive
+    // TRANSMISSION_OK.
     int transmitted = 0;
     int term = 0;
     
@@ -223,14 +247,14 @@ int main(int argc, char *argv[]){
         free(input);
         
         wait(NULL);
-        if(detatch_from_block(sh_mem2) == -1){
+        if(detach_from_block(sh_mem2) == -1){
             fprintf(stderr, "Failed to detach from ENC1->CHAN memory block.\n");
         }
         if(destroy_block(FIRST_FILE, 1) == -1) {
             fprintf(stderr, "Failed to delete ENC1->CHAN shared memory block.\n");
         }
-        if(detatch_from_block(sh_mem1) == -1){
-            fprintf(stderr, "Failed to detach from memory block.\n");
+        if(detach_from_block(sh_mem1) == -1){
+            fprintf(stderr, "Failed to detach from P1->ENC1 memory block.\n");
         }
     
         sem_close(mutex1);    

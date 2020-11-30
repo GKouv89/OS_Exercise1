@@ -42,13 +42,5 @@ main2: p2.o shared_memory.o
 	gcc -o main2 p2.o shared_memory.o $(SEM)
 	rm p2.o
 
-test:
-	gcc -g -c tests/enc1_test.c
-	gcc -g -c tests/p1_test.c
-	gcc -g -c shared/shared_memory.c
-	gcc -o p1 p1_test.o shared_memory.o -lpthread -lrt
-	gcc -o enc1 enc1_test.o shared_memory.o -lpthread -lrt
-	rm -f *.o
-
 clean:
 	rm -f chan/chan enc/enc2 enc/enc1 main main2 *.o

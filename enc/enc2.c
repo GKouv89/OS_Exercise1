@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ipc.h>
-/* ENC2 will not create the shared memory segment between herself and CHAN
-    just attach herself to it.
-    She will also only request the already opened for her semaphores,
-    and only detach from the segment instead of deleting it. */
+/* ENC2 will not any process, nor will it create the shared memory segment 
+    between itself and CHAN; it will just attach to it. 
+    Semaphore usage is symmetrical to ENC1 and CHAN.*/
 
 #include <fcntl.h>
 #include <semaphore.h>
@@ -15,7 +14,6 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 
-// #include "../p/common_keys1.h"
 #include "../shared/shared_memory.h"
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
@@ -23,16 +21,17 @@
 int main(){
     char *sh_mem3 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 2);
     if(sh_mem3 == NULL){
-        fprintf(stderr, "Failed to attach to shared memory block in ENC2.\n");
+        fprintf(stderr, "Failed to attach to CHAN->ENC2 shared memory block in ENC2.\n");
     }
     
     char *sh_mem_fin = attach_to_block(FIRST_FILE, BLOCK_SIZE, 3);
     if(sh_mem_fin == NULL){
-        fprintf(stderr, "Failed to create or attach to shared memory block in ENC2.\n");
+        fprintf(stderr, "Failed to attach to P2->ENC2 shared memory block in ENC2.\n");
     }
     
     int direction = 1;
-    int transmitted = 0; // When message is OK, this turns to 1.
+    // Transmitted's usage here is symmetrical to the one in ENC1.
+    int transmitted = 0; 
     int term = 0;
     
     sem_t *mutex3 = sem_open(MUTEX3, 0);
@@ -220,12 +219,12 @@ int main(){
     free(input->message);
     free(input);
     
-    if(detatch_from_block(sh_mem_fin) == -1){
-        fprintf(stderr, "Failed to detach from ENC2->P2 memory block.\n");
+    if(detach_from_block(sh_mem_fin) == -1){
+        fprintf(stderr, "Failed to detach from P2->ENC2 memory block (in ENC2).\n");
     }
     
-    if(detatch_from_block(sh_mem3) == -1){
-        fprintf(stderr, "Failed to detach from ENC1->CHAN memory block.\n");
+    if(detach_from_block(sh_mem3) == -1){
+        fprintf(stderr, "Failed to detach from CHAN->ENC2 memory block (in ENC2).\n");
     }
     
     sem_close(mutex4);

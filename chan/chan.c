@@ -1,3 +1,11 @@
+/* CHAN creates no other process, but it does create the memory segment it will shared
+    with ENC2. 
+    CHAN also has 10 semaphores available, symmetrically to ENC1. 2 of them are mutex sems
+    that refer to the usage of the two memory segments it has access to, two of them
+    refer to its ability to read from either of the two memory segments, two of them
+    refer to the ability of ENC1 to read from or write to their shared memory segment
+    and the last two refer to ENC2's ability to read or write to their shared memory segment.*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -10,8 +18,6 @@
 #include "../shared/shared_memory.h"
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
-
-void first_transmission();
 
 int main(int argc, char *argv[]){
     char *sh_mem2 = attach_to_block(FIRST_FILE, BLOCK_SIZE, 1);
@@ -28,7 +34,14 @@ int main(int argc, char *argv[]){
     memset(sh_mem3, 0, BLOCK_SIZE);
     
     int direction = 1;
-    int transmitted = 0; // Zero right before a transmission attempt, 1 afterwards
+    // Transmitted's usage in CHAN is a bit different from the one in P1 and from the one in ENC1.
+    // Here, transmitted indicates whether a transmission is necessary; when CHAN transmits
+    // a message to either ENC1 or ENC2, it thinks that the transmission was OK and 
+    // sets transmitted to 1, and waits to read TRANSMISSION_OK from either ENC1 or ENC2.
+    // But, if the responsible for making the MD5 check ENC process requests retransmission,
+    // then CHAN sets transmitted to 0, and tells itself to read the last correct
+    // version of the message from the segment between itself and the other ENC process.
+    int transmitted = 0; 
     int term = 0;
     
     sem_t *mutex2 = sem_open(MUTEX2, 0);   
@@ -100,7 +113,7 @@ int main(int argc, char *argv[]){
                     }
                 }
 
-                printf("CHAN morphed the message to: %s\n", input->message);
+                // printf("CHAN morphed the message to: %s\n", input->message);
                 sem_post(mutex2);
                 sem_post(chan2w);
                 
@@ -185,7 +198,7 @@ int main(int argc, char *argv[]){
                     }
                 }
 
-                printf("CHAN morphed the message to: %s\n", input->message);
+                // printf("CHAN morphed the message to: %s\n", input->message);
                 sem_post(mutex3);
                 sem_post(chan1w);
                 
@@ -230,16 +243,16 @@ int main(int argc, char *argv[]){
     free(input->message);
     free(input);
         
-    if(detatch_from_block(sh_mem2) == -1){
-        fprintf(stderr, "Failed to detach from ENC1->CHAN memory block.\n");
+    if(detach_from_block(sh_mem2) == -1){
+        fprintf(stderr, "Failed to detach from ENC1->CHAN memory block (in CHAN).\n");
     }
     
-    if(detatch_from_block(sh_mem3) == -1){
-        fprintf(stderr, "Failed to detach from CHAN->ENC2 memory block.\n");
+    if(detach_from_block(sh_mem3) == -1){
+        fprintf(stderr, "Failed to detach from CHAN->ENC2 memory block (in CHAN).\n");
     }
     
     if(destroy_block(FIRST_FILE, 2) == -1) {
-        fprintf(stderr, "Failed to delete CHAN->ENC2 shared memory block.\n");
+        fprintf(stderr, "Failed to delete CHAN->ENC2 shared memory block (in CHAN).\n");
     }
 
     sem_close(mutex2);

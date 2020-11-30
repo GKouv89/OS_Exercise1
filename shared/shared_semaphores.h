@@ -25,11 +25,4 @@
 #define P2_READ "/p2read"
 #define P2_WRITE "/p2write"
 
-// SEMAPHORES FOR TEST FOLDER FILES
-// #define MUTEX1 "/mutex1"
-// #define P1_READ "/p1read"
-// #define P1_WRITE "/p1write"
-// #define ENC1_READ "/enc1read"
-// #define ENC1_WRITE "/enc1write"
-
 #endif

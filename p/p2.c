@@ -1,8 +1,7 @@
 /* P2 creates ENC2, with a shared memory segment between them */
-/* P2 will read from ENC2 and print the final output if the checksum is correct */
-/* This is for our one-way communication trial and will change for the real application */
-/* P2 will, however, be in charge of creating and deleting the memory and the semaphores
-    shared between her and ENC2 in the final version, too */
+/* P2 will read from ENC2 and print the final output if the checksum is correct
+    in the first send operation. Then, it takes turns between reading from keyboard
+    and writing to console, and so does P1.*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,31 +16,24 @@
 #include <sys/types.h>
 #include <errno.h>
 
-// #include "common_keys1.h"
 #include "../shared/shared_memory.h"
 #include "../shared/shared_semaphores.h"
 #include "../shared/message_format.h"
-
-
-/* P2 creates the shared memory segment between herself and ENC2
-    She will also only create the semaphores that are used for access to the segment,
-    and will be in charge of destroying it in cleanup. */
-
 
 int main(){
 
     // Shared memory operations
     char *sh_mem_fin = attach_to_block(FIRST_FILE, BLOCK_SIZE, 3);
     if(sh_mem_fin == NULL){
-        fprintf(stderr, "Failed to create or attach to shared memory block in P2.\n");
+        fprintf(stderr, "Failed to create P2->ENC2 shared memory block (in P2).\n");
     }
     memset(sh_mem_fin, 0, BLOCK_SIZE);
     
+    // The usage of direction and transmitted is symmetrical to P1.
     int direction = 1;
     int transmitted = 0;
     int term = 0;
     
-    // Semaphore ops. P1 will create the named semaphores, ENC1 will simply request them.
     sem_unlink(MUTEX4);
     sem_unlink(ENC22_READ);
     sem_unlink(ENC22_WRITE);
@@ -141,11 +133,11 @@ int main(){
         free(input);
         
         wait(NULL);
-        if(detatch_from_block(sh_mem_fin) == -1){
-            fprintf(stderr, "Failed to detach from memory block.\n");
+        if(detach_from_block(sh_mem_fin) == -1){
+            fprintf(stderr, "Failed to detach from P2->ENC2 memory block (in P2).\n");
         }
         if(destroy_block(FIRST_FILE, 3) == -1) {
-            fprintf(stderr, "Failed to delete shared memory block.\n");
+            fprintf(stderr, "Failed to delete P2->ENC2 shared memory block (in P2).\n");
         }
         
         sem_close(mutex4);
