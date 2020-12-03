@@ -66,7 +66,7 @@ int main(int argc, char *argv[]){
     sem_t *enc11r = sem_open(ENC11_READ, O_CREAT, 0660, 0);
     sem_t *enc11w = sem_open(ENC11_WRITE, O_CREAT, 0660, 0);
     
-    printf("Write 'bye' for termination\n");
+    printf("Messages must not exceed 50 characters.\nWrite 'bye' for termination\n");
     pid_t pid = fork();
     if(pid == 0){
         char *enc1 = "enc/enc1";
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]){
                 sem_wait(mutex);
                 
                 printf("Input: ");
-                fgets(input->message, BLOCK_SIZE, stdin);
+                fgets(input->message, 50, stdin);
                 input->message = strtok(input->message, "\n");
                 if(strcmp(input->message, "bye") == 0){
                     strcpy(input->message, "TERM");
@@ -138,7 +138,7 @@ int main(int argc, char *argv[]){
                     clear_buffer(input);
                     direction = 1;
                     printf("Input: ");
-                    fgets(input->message, BLOCK_SIZE, stdin);
+                    fgets(input->message, 50, stdin);
                     input->message = strtok(input->message, "\n");
                     if(strcmp(input->message, "bye") == 0){
                         strcpy(input->message, "TERM");

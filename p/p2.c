@@ -73,7 +73,7 @@ int main(){
                     clear_buffer(input);
                     
                     printf("Input: ");
-                    fgets(input->message, BLOCK_SIZE, stdin);
+                    fgets(input->message, 50, stdin);
                     input->message = strtok(input->message, "\n");
                     if(strcmp(input->message, "bye") == 0){
                         strcpy(input->message, "TERM");

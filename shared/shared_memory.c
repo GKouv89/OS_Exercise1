@@ -65,3 +65,5 @@ void clear_buffer(msg *input){
     memset(input + sizeof(int) + sizeof(char*), 0, MD5_DIGEST_LENGTH);
     memset(input, 0, sizeof(int));
 }
+
+
